@@ -16,6 +16,10 @@ var optionsDefaults = {
   dblClickZoomEnabled: true, // enable or disable zooming by double clicking (default enabled)
   mouseWheelZoomEnabled: true, // enable or disable zooming by mouse wheel (default enabled)
   preventMouseEventsDefault: true, // enable or disable preventDefault for mouse events
+  zoomingWhilePanning: true, // enable zooming while panning
+  zoomingWithCtrlToo: true, // enable Ctrl to zoom
+  fixScroll: false, // Useful when you have many SvgPanZoom in a file, allows one-touch scrolling on phones (two-finger panning) and avoids opening links inside SVG with the mouse wheel button
+  MouseClicSelectEnabled: false, // Enables using click to select, open links within SVG, etc.; if enabled, left-click panning will not be enabled
   zoomScaleSensitivity: 0.1, // Zoom sensitivity
   minZoom: 0.5, // Minimum Zoom level
   maxZoom: 10, // Maximum Zoom level
@@ -133,6 +137,11 @@ SvgPanZoom.prototype.setupHandlers = function() {
       return result;
     },
 
+    // Mouse auxclick group
+    auxclick: function(evt) {
+      return that.handleauxclick(evt);
+    },
+
     // Mouse up group
     mouseup: function(evt) {
       return that.handleMouseUp(evt);
@@ -244,8 +253,24 @@ SvgPanZoom.prototype.disableMouseWheelZoom = function() {
  * @param  {Event} evt
  */
 SvgPanZoom.prototype.handleMouseWheel = function(evt) {
-  if (!this.options.zoomEnabled || this.state !== "none") {
+  if (!this.options.zoomEnabled) {
     return;
+  }
+
+  if (this.state == "pan") {
+    // Don't scroll when is moving the SvgPanZoom
+    evt.preventDefault();
+  }
+
+  if (!this.options.zoomingWhilePanning || this.state !== "pan") {
+    if (!evt.ctrlKey && this.options.zoomingWithCtrlToo && !evt.shiftKey) {
+      // Only work when CTRL or SHIFT key is pressed
+      return;
+    }
+
+    if (this.state !== "none") {
+      return;
+    }
   }
 
   if (this.options.preventMouseEventsDefault) {
@@ -281,6 +306,13 @@ SvgPanZoom.prototype.handleMouseWheel = function(evt) {
     zoom = Math.pow(1 + this.options.zoomScaleSensitivity, -1 * delta); // multiplying by neg. 1 so as to make zoom in/out behavior match Google maps behavior
 
   this.zoomAtPoint(zoom, relativeMousePoint);
+
+  if (this.options.zoomingWhilePanning && this.state === "pan") {
+    this.firstEventCTM = this.viewport.getCTM(); // Saves states for correct panning when zooming
+    this.stateOrigin = SvgUtils.getEventPoint(evt, this.svg).matrixTransform(
+      this.firstEventCTM.inverse()
+    );
+  }
 };
 
 /**
@@ -479,9 +511,18 @@ SvgPanZoom.prototype.handleDblClick = function(evt) {
  * @param {Event} evt
  */
 SvgPanZoom.prototype.handleMouseDown = function(evt, prevEvt) {
+  if (evt.button === 0 && this.options.MouseClicSelectEnabled) {
+    return;
+  }
   if (this.options.preventMouseEventsDefault) {
     if (evt.preventDefault) {
-      evt.preventDefault();
+      if (
+        this.options.fixScroll &&
+        evt.type !== "touchstart" &&
+        !(evt.touches && evt.touches.length == 1)
+      ) {
+        evt.preventDefault();
+      }
     } else {
       evt.returnValue = false;
     }
@@ -509,6 +550,9 @@ SvgPanZoom.prototype.handleMouseDown = function(evt, prevEvt) {
  */
 SvgPanZoom.prototype.handleMouseMove = function(evt) {
   if (this.options.preventMouseEventsDefault) {
+    if (this.options.fixScroll && evt.touches && evt.touches.length == 1) {
+      return;
+    }
     if (evt.preventDefault) {
       evt.preventDefault();
     } else {
@@ -527,6 +571,18 @@ SvgPanZoom.prototype.handleMouseMove = function(evt) {
       );
 
     this.viewport.setCTM(viewportCTM);
+  }
+};
+
+/**
+ * Handle mouse auxclick event
+ *
+ * @param  {Event} evt
+ */
+SvgPanZoom.prototype.handleauxclick = function(evt) {
+  // This event prevents links within the SVG from opening when the mouse wheel button is pressed
+  if (this.options.fixScroll) {
+    evt.preventDefault();
   }
 };
 
