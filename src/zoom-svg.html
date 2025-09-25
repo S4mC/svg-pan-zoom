@@ -1,0 +1,143 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="svg-pan-zoom.js"></script>
+<script>
+
+    window.addEventListener('load', function () {
+                
+        if (!document.getElementById('page5')){
+            return;
+        }
+        
+        window.zoomContainer5 = svgPanZoom("#page5");
+        
+        let viewer5 = document.getElementById('SVGiewer5');
+        let rectElement = viewer5.querySelector('svg>g>rect');
+        let lastWidth = viewer5.offsetWidth; // Track the last width
+
+        function proper_height(){
+            rectElement = viewer5.querySelector('svg>g>rect');
+            if (rectElement) {
+                // Get the dimensions of the rect
+                const rectWidth = rectElement.getAttribute('width') || rectElement.width.baseVal.value;
+                const rectHeight = rectElement.getAttribute('height') || rectElement.height.baseVal.value;
+                
+                // Calculate the ratio (height/width)
+                const aspectRatio = rectHeight / rectWidth;
+                
+                // Get the current width of the SVG-viewer
+                const viewerWidth = viewer5.offsetWidth;
+                
+                if (viewerWidth > 0) {
+                    // Calculate the proportional height
+                    const proportionalHeight = viewerWidth * aspectRatio;
+                    
+                    // Calculate 80vh in pixels
+                    const maxHeight = window.innerHeight * 0.8;
+                    
+                    // Apply proportional height with limit of 80vh
+                    const finalHeight = Math.min(proportionalHeight, maxHeight);
+                    viewer5.style.height = finalHeight + 'px';
+                }
+            }
+        }
+        
+        let resizeTimeout;
+        window.addEventListener("resize", function () {
+            clearTimeout(resizeTimeout); // Cancel any previous timeout
+            resizeTimeout = setTimeout(function () {
+                viewer5 = document.getElementById('SVGiewer5');
+                const currentWidth = viewer5.offsetWidth;
+                
+                // Only execute if the width has changed
+                if (currentWidth !== lastWidth) {
+                    if (window.zoomContainer5) {
+                        window.zoomContainer5.destroy();
+                    }
+                    proper_height();
+                    viewer5.querySelectorAll('.svg-pan-zoom_viewport').forEach(viewport => {
+                        viewport.replaceWith(...viewport.childNodes);
+                    });
+                    window.zoomContainer5 = svgPanZoom("#page5");
+                    center_svg();
+                    lastWidth = currentWidth; // Update the last width
+                }
+            }, 280); // 280ms after finishing
+        });
+        
+        proper_height();
+
+        // Button listeners
+        document.getElementById('zoom-in5').addEventListener('click', function(ev){
+            ev.preventDefault()
+            window.zoomContainer5.zoomIn()
+        });
+
+        document.getElementById('zoom-out5').addEventListener('click', function(ev){
+            ev.preventDefault()
+            window.zoomContainer5.zoomOut()
+        });
+        
+        function center_svg(){
+            const zoomContainer = window.zoomContainer5;
+            rectElement = viewer5.querySelector('svg>g>rect');
+            
+            if (zoomContainer && rectElement) {
+                zoomContainer.zoom(1);
+                zoomContainer.pan({
+                    x: (viewer5.offsetWidth - (zoomContainer.getSizes().viewBox.width * zoomContainer.getSizes().realZoom))/2, 
+                    y: (viewer5.offsetHeight - (zoomContainer.getSizes().viewBox.height * zoomContainer.getSizes().realZoom))/2 
+                });
+            }else{
+                window.zoomContainer5.resetZoom();
+                window.zoomContainer5.fit();
+                window.zoomContainer5.center();
+            }
+        }
+
+        document.getElementById('reset_zoom5').addEventListener('click', function(ev){
+            ev.preventDefault()
+            center_svg();
+        });
+        
+        center_svg();
+    });
+
+    //Center SVG inside SVG-viewer
+    window.addEventListener('load', function () {
+        //If you have a lot of SVG use this and the id of SVG Viewer need to be SVGiewer{number} and window.zoomContainer need to be window.zoomContainer{number}:
+        document.querySelectorAll('.SVG-viewer').forEach((viewer) => {
+            const viewerId = viewer.id;
+            const containerNumber = viewerId.replace('SVGiewer', '');
+            const zoomContainer = window[`zoomContainer${containerNumber}`];
+            
+            if (zoomContainer) {
+                zoomContainer.zoom(1);
+                zoomContainer.pan({ 
+                    x: (viewer.offsetWidth - (zoomContainer.getSizes().viewBox.width * zoomContainer.getSizes().realZoom))/2, 
+                    y: (viewer.offsetHeight - (zoomContainer.getSizes().viewBox.height * zoomContainer.getSizes().realZoom))/2 
+                });
+            }
+        });
+    });
+</script>
+<style>
+    .SVG-viewer svg {
+        width: inherit;
+        height: inherit;
+    }
+</style>
+<div
+    id="SVGiewer5"
+    class="SVG-viewer"
+    style="width: 100%; height: 100%; position: relative;"
+>
+    <button style="position: absolute; bottom: 10px; right: 10px;background: transparent; border: 0;">
+        <svg id="zoom-in5" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" style="background: black; border-radius: 50%;"><path fill="#fff" d="M4.929 4.929A10 10 0 1 1 19.07 19.07A10 10 0 0 1 4.93 4.93zM13 9a1 1 0 1 0-2 0v2H9a1 1 0 1 0 0 2h2v2a1 1 0 1 0 2 0v-2h2a1 1 0 1 0 0-2h-2z"/></svg>
+        <svg id="zoom-out5" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" style="background: black; border-radius: 50%;"><path fill="#fff" d="M17 3.34A10 10 0 1 1 2 12l.005-.324A10 10 0 0 1 17 3.34M16.5 11.5H8.5a0.5 0.5 0 0 0-0.5 0.5v1a0.5 0.5 0 0 0 0.5 0.5h8a0.5 0.5 0 0 0 0.5-0.5v-1a0.5 0.5 0 0 0-0.5-0.5"/></svg>
+        <svg id="reset_zoom5" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" style="background: black; border-radius: 50%;"><path fill="#fff" d="M17 3.34a10 10 0 1 1-14.995 8.984L2 12l.005-.324A10 10 0 0 1 17 3.34m-6.489 5.8a1 1 0 0 0-1.218 1.567L10.585 12l-1.292 1.293l-.083.094a1 1 0 0 0 1.497 1.32L12 13.415l1.293 1.292l.094.083a1 1 0 0 0 1.32-1.497L13.415 12l1.292-1.293l.083-.094a1 1 0 0 0-1.497-1.32L12 10.585l-1.293-1.292l-.094-.083z"/></svg>
+    </button>
+
+
+    <svg xmlns:xlink="http://www.w3.org/1999/xlink" id="page5" viewBox="0 0 2245 1587" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" preserveaspectradio="xMinYMin meet"><defs></defs><rect height="1587" stroke="#808080" fill="#0b050b" x="0" width="2245" y="0"></rect><g transform="translate(884.672500,590.902500)" id="shape88"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#3e2d00" fill-rule="nonzero" stroke-width="1" d="M142.0,53.3L142.0,.0L.0,.0L.0,53.3L142.0,53.3z"></path><text style="fill:#fbbf04;font-family:Cascadia Code,PingFang SC,Mircrosoft YaHei,Arial;font-size:12.00pt" xml:space="preserve"><tspan x="18.2" y="33.3">Alojamiento</tspan></text></g><g transform="translate(777.798500,686.913500)" id="shape89"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#191919" fill-rule="nonzero" stroke-width="1" d="M170.0,51.7L170.0,.0L.0,.0L.0,51.7L170.0,51.7z"></path><text style="fill:#ffffff;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:9.00pt" xml:space="preserve"><tspan x="37.0" y="29.7">Servidor propio</tspan></text></g><g transform="translate(963.599500,686.913500)" id="shape90"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#191919" fill-rule="nonzero" stroke-width="1" d="M170.0,51.7L170.0,.0L.0,.0L.0,51.7L170.0,51.7z"></path><text style="fill:#ffffff;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:9.00pt" xml:space="preserve"><tspan x="75.4" y="29.7">VPS</tspan></text></g><g transform="translate(955.679000,644.238000)" id="shape91"><path stroke-dasharray="3.33333,3.33333" stroke="#fbbf04" fill="none" stroke-width="1.3333300352096558" d="M.0,.0L.0,27.5L-92.9,27.5L-92.9,37.6"></path><path stroke="#fbbf04" fill="#fbbf04" stroke-width="1" stroke-linecap="round" d="M-92.9,42.7L-89.4,36.7C-90.5,37.3,-91.6,37.6,-92.9,37.6C-94.2,37.6,-95.3,37.3,-96.4,36.7L-92.9,42.7"></path></g><g transform="translate(955.679000,644.238000)" id="shape92"><path stroke-dasharray="3.33333,3.33333" stroke="#fbbf04" fill="none" stroke-width="1.3333300352096558" d="M.0,.0L.0,27.5L92.9,27.5L92.9,37.6"></path><path stroke="#fbbf04" fill="#fbbf04" stroke-width="1" stroke-linecap="round" d="M92.9,42.7L96.4,36.7C95.3,37.3,94.2,37.6,92.9,37.6C91.6,37.6,90.5,37.3,89.4,36.7L92.9,42.7"></path></g><g transform="translate(777.798500,761.191500)" id="shape93"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#191919" fill-rule="nonzero" stroke-width="1" d="M170.0,51.7L170.0,.0L.0,.0L.0,51.7L170.0,51.7z"></path><text style="fill:#ffffff;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:9.00pt" xml:space="preserve"><tspan x="27.4" y="29.7">En una rasperry pi</tspan></text></g><g transform="translate(862.779000,738.627000)" id="shape94"><path stroke-dasharray="3.33333,3.33333" stroke="#fbbf04" fill="none" stroke-width="1.3333300352096558" d="M.0,.0L.0,17.5"></path><path stroke="#fbbf04" fill="#fbbf04" stroke-width="1" stroke-linecap="round" d="M.0,22.6L3.5,16.6C2.4,17.2,1.3,17.5,.0,17.5C-1.3,17.5,-2.4,17.2,-3.5,16.6L.0,22.6"></path></g><g transform="translate(1205.963500,590.902500)" id="shape95"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#3e2d00" fill-rule="nonzero" stroke-width="1" d="M142.0,53.3L142.0,.0L.0,.0L.0,53.3L142.0,53.3z"></path><text style="fill:#fbbf04;font-family:Cascadia Code,PingFang SC,Mircrosoft YaHei,Arial;font-size:12.00pt" xml:space="preserve"><tspan x="13.4" y="33.3">Modificación</tspan></text></g><g transform="translate(1191.989500,666.148500)" id="shape96"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#191919" fill-rule="nonzero" stroke-width="1" d="M170.0,51.7L170.0,.0L.0,.0L.0,51.7L170.0,51.7z"></path><text style="fill:#ffffff;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:9.00pt" xml:space="preserve"><tspan x="65.8" y="29.7">Titulo</tspan></text></g><g transform="matrix(0.000000,1.000000,-1.000000,0.000000,1176.558800,500.005000)" id="shape97"><path stroke="#c2c2c2" fill="none" stroke-width="1.3333300352096558" d="M56.0,71.6L120.3,135.8"></path><path stroke="#c2c2c2" fill="#c2c2c2" stroke-width="1" stroke-linecap="round" d="M123.5,139.1C121.7,140.9,118.8,140.9,117.0,139.1C115.2,137.3,115.2,134.4,117.0,132.6C118.8,130.8,121.7,130.8,123.5,132.6C125.3,134.4,125.3,137.3,123.5,139.1"></path><rect height="16.8" transform="matrix(0.00,-1.00,1.00,0.00,-43.6,99.6)" fill="#0d0d0d" x="-40.0" width="136.3" y="46.8"></rect><rect height="16.8" transform="matrix(0.00,-1.00,1.00,0.00,-43.6,99.6)" fill="#0d0d0d" x="-32.0" width="128.0" y="63.6"></rect><rect height="16.8" transform="matrix(0.00,-1.00,1.00,0.00,-43.6,99.6)" fill="#0d0d0d" x="-32.0" width="120.0" y="80.4"></rect><text transform="matrix(0.00,-1.00,1.00,0.00,-43.6,99.6)" style="fill:#ebebeb;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="-40.0" y="60.4">Al inicio debemos </tspan><tspan x="-32.0" y="77.2">probarlo en una </tspan><tspan x="-32.0" y="94.0">máquina virtual</tspan></text></g><g transform="translate(884.673000,617.570000)" id="shape98"><path stroke-dasharray="3.33333,3.33333" stroke="#fbbf04" fill="none" stroke-width="1.3333300352096558" d="M.0,.0L-87.5,.0"></path><path stroke="#fbbf04" fill="#fbbf04" stroke-width="1" stroke-linecap="round" d="M-92.6,.0L-86.6,3.5C-87.2,2.4,-87.5,1.3,-87.5,.0C-87.5,-1.3,-87.2,-2.4,-86.6,-3.5L-92.6,.0"></path></g><a xlink:href="https://www.duckdns.org" target="_blank" xlink:title="DuckDNS"><g transform="translate(622.093500,579.713500)" id="shape99"><path stroke-dasharray="2.5,2.5" stroke="#83c08d" fill="#191919" fill-rule="nonzero" stroke-width="1" d="M170.0,75.7L170.0,.0L.0,.0L.0,75.7L170.0,75.7z"></path><text style="fill:#ffffff;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:9.00pt" xml:space="preserve"><tspan x="5.0" y="19.2">La IP fija la conseguimos </tspan><tspan x="21.0" y="33.6">con DDNS (DuckDNS) o </tspan><tspan x="21.0" y="48.0">pagando un plan para </tspan><tspan x="43.4" y="62.4">tener ip fija</tspan></text></g></a><g transform="matrix(0.000000,1.000000,-1.000000,0.000000,876.663700,449.918000)" id="shape100"><path stroke="#c2c2c2" fill="none" stroke-width="1.3333300352096558" d="M56.0,84.6L120.3,148.9"></path><path stroke="#c2c2c2" fill="#c2c2c2" stroke-width="1" stroke-linecap="round" d="M123.5,152.1C121.7,153.9,118.8,153.9,117.0,152.1C115.2,150.3,115.2,147.4,117.0,145.6C118.8,143.8,121.7,143.8,123.5,145.6C125.3,147.4,125.3,150.3,123.5,152.1"></path><rect height="16.8" transform="matrix(0.00,-1.00,1.00,0.00,-56.6,112.6)" fill="#191919" x="-52.0" width="161.3" y="59.8"></rect><rect height="16.8" transform="matrix(0.00,-1.00,1.00,0.00,-56.6,112.6)" fill="#191919" x="-48.0" width="157.3" y="76.6"></rect><rect height="16.8" transform="matrix(0.00,-1.00,1.00,0.00,-56.6,112.6)" fill="#191919" x="-32.0" width="120.0" y="93.4"></rect><text transform="matrix(0.00,-1.00,1.00,0.00,-56.6,112.6)" style="fill:#ebebeb;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="-52.0" y="73.4">Probar cual es la ip </tspan><tspan x="-48.0" y="90.2">de la casa para ver </tspan><tspan x="-32.0" y="107.0">si es fija o no</tspan></text></g><g transform="translate(1466.963500,590.902500)" id="shape101"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#3e2d00" fill-rule="nonzero" stroke-width="1" d="M142.0,53.3L142.0,.0L.0,.0L.0,53.3L142.0,53.3z"></path><text style="fill:#fbbf04;font-family:Cascadia Code,PingFang SC,Mircrosoft YaHei,Arial;font-size:12.00pt" xml:space="preserve"><tspan x="13.4" y="33.3">Encryptación</tspan></text></g><g transform="translate(1452.989500,666.148500)" id="shape102"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#191919" fill-rule="nonzero" stroke-width="1" d="M170.0,51.7L170.0,.0L.0,.0L.0,51.7L170.0,51.7z"></path><text style="fill:#ffffff;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:9.00pt" xml:space="preserve"><tspan x="14.6" y="22.2">Let's Encrypt para que </tspan><tspan x="11.4" y="36.6">tenga certificado HTTPS</tspan></text></g><g transform="translate(1537.970000,666.149000)" id="shape103"><path stroke-dasharray="3.33333,3.33333" stroke="#fbbf04" fill="none" stroke-width="1.3333300352096558" d=""></path></g><g transform="translate(1537.970000,644.238000)" id="shape104"><path stroke-dasharray="3.33333,3.33333" stroke="#fbbf04" fill="none" stroke-width="1.3333300352096558" d="M.0,.0L.0,16.8"></path><path stroke="#fbbf04" fill="#fbbf04" stroke-width="1" stroke-linecap="round" d="M.0,21.9L3.5,15.9C2.4,16.5,1.3,16.8,.0,16.8C-1.3,16.8,-2.4,16.5,-3.5,15.9L.0,21.9"></path></g><g transform="translate(1205.956500,445.605000)" id="group105"><g id="shape106"><path stroke="#454545" fill="#454545" fill-rule="nonzero" stroke-width="1" d="M.0,.0L186.7,.0L186.7,30.0L.0,30.0L.0,.0z"></path><rect height="16.8" fill="#454545" x="57.4" width="72.0" y="6.2"></rect><text style="fill:#e6dfd0;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="57.4" y="19.8">Failtoban</tspan></text></g><g transform="translate(0.000000,30.000000)" id="shape107"><path stroke="#454545" fill="#191919" fill-rule="nonzero" stroke-width="1" d="M.0,.0L186.7,.0L186.7,94.6L.0,94.6L.0,.0z"></path><rect height="16.8" fill="#191919" x="5.4" width="177.8" y="22.7"></rect><rect height="16.8" fill="#191919" x="21.4" width="152.0" y="39.5"></rect><rect height="16.8" fill="#191919" x="29.4" width="136.0" y="56.3"></rect><rect height="16.8" fill="#191919" x="57.4" width="72.0" y="73.1"></rect><text style="fill:#e6dfd0;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="5.4" y="36.3">Ver si failtoban puedo </tspan><tspan x="21.4" y="53.1">usarlo en servidor </tspan><tspan x="29.4" y="69.9">para bloquear ip </tspan><tspan x="57.4" y="86.7">atacantes</tspan></text></g></g><g transform="translate(1205.963500,759.569500)" id="shape108"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#3e2d00" fill-rule="nonzero" stroke-width="1" d="M142.0,53.3L142.0,.0L.0,.0L.0,53.3L142.0,53.3z"></path><text style="fill:#fbbf04;font-family:Cascadia Code,PingFang SC,Mircrosoft YaHei,Arial;font-size:12.00pt" xml:space="preserve"><tspan x="51.8" y="33.3">PaaS</tspan></text></g><g transform="translate(1186.102700,829.555500)" id="shape109"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#191919" fill-rule="nonzero" stroke-width="1" d="M181.7,75.7L181.7,.0L.0,.0L.0,75.7L181.7,75.7z"></path><text style="fill:#ffffff;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:9.00pt" xml:space="preserve"><tspan x="14.1" y="19.1">Plataforma completa para </tspan><tspan x="26.9" y="33.5">crear, implementar y </tspan><tspan x="7.7" y="47.9">gestionar aplicaciones web</tspan></text></g><g transform="translate(1276.970000,812.905000)" id="shape110"><path stroke-dasharray="3.33333,3.33333" stroke="#fbbf04" fill="none" stroke-width="1.3333300352096558" d="M.0,.0L.0,11.6"></path><path stroke="#fbbf04" fill="#fbbf04" stroke-width="1" stroke-linecap="round" d="M.0,16.7L3.5,10.7C2.4,11.2,1.3,11.6,.0,11.6C-1.3,11.6,-2.4,11.2,-3.5,10.7L.0,16.7"></path></g><a xlink:href="https://coolify.io" target="_blank" xlink:title="Coolify"><g transform="translate(1097.179500,929.918500)" id="shape111"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#191919" fill-rule="nonzero" stroke-width="1" d="M170.0,51.7L170.0,.0L.0,.0L.0,51.7L170.0,51.7z"></path><text style="fill:#ffffff;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:9.00pt" xml:space="preserve"><tspan x="62.6" y="29.7">Coolify</tspan></text></g></a><g transform="translate(1286.789500,929.918500)" id="shape112"><path stroke-dasharray="2.5,2.5" stroke="#fbbf04" fill="#191919" fill-rule="nonzero" stroke-width="1" d="M170.0,51.7L170.0,.0L.0,.0L.0,51.7L170.0,51.7z"></path><text style="fill:#ffffff;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:9.00pt" xml:space="preserve"><tspan x="59.4" y="29.7">CapRover</tspan></text></g><g transform="translate(1076.604000,990.800000)" id="table113"><g><path stroke="#868686" fill="none" stroke-width="1" d="M.0,.0L201.1,.0L201.1,35.0L.0,35.0L.0,.0z"></path><text style="fill:#e6dfd0;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="8.2" y="22.3">Nuevo</tspan></text></g><g><path stroke="#868686" fill="none" stroke-width="1" d="M201.1,.0L400.5,.0L400.5,35.0L201.1,35.0L201.1,.0z"></path><text style="fill:#e6dfd0;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="209.3" y="22.3">Con trayectoria</tspan></text></g><g><path stroke="#868686" fill="none" stroke-width="1" d="M.0,35.0L201.1,35.0L201.1,70.0L.0,70.0L.0,35.0z"></path><text style="fill:#e6dfd0;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="8.2" y="57.3">Interfaz más amigable</tspan></text></g><g><path stroke="#868686" fill="none" stroke-width="1" d="M201.1,35.0L400.5,35.0L400.5,70.0L201.1,70.0L201.1,35.0z"></path><text style="fill:#e6dfd0;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="209.3" y="57.3">Interfaz más antigua</tspan></text></g><g><path stroke="#868686" fill="none" stroke-width="1" d="M.0,70.0L201.1,70.0L201.1,105.0L.0,105.0L.0,70.0z"></path><text style="fill:#e6dfd0;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="8.2" y="92.3">Si soporta docker </tspan><tspan x="8.2" y="109.1">compose</tspan></text></g><g><path stroke="#868686" fill="none" stroke-width="1" d="M201.1,70.0L400.5,70.0L400.5,105.0L201.1,105.0L201.1,70.0z"></path><text style="fill:#e6dfd0;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="209.3" y="92.3">No soporta docker </tspan><tspan x="209.3" y="109.1">compose</tspan></text></g><g><path stroke="#868686" fill="none" stroke-width="1" d="M.0,105.0L201.1,105.0L201.1,151.0L.0,151.0L.0,105.0z"></path><text style="fill:#e6dfd0;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="8.2" y="132.8">Deploy automático</tspan></text></g><g><path stroke="#868686" fill="none" stroke-width="1" d="M201.1,105.0L400.5,105.0L400.5,151.0L201.1,151.0L201.1,105.0z"></path><text style="fill:#e6dfd0;font-family:Ubuntu Mono Medium,PingFang SC,Mircrosoft YaHei,Arial;font-size:10.00pt" xml:space="preserve"><tspan x="209.3" y="124.8">Deploy automático </tspan><tspan x="209.3" y="141.6">limitado</tspan></text></g></g><g transform="translate(1276.970000,905.268000)" id="shape114"><path stroke-dasharray="3.33333,3.33333" stroke="#fbbf04" fill="none" stroke-width="1.3333300352096558" d="M.0,.0L.0,11.0L-94.8,11.0L-94.8,19.3"></path><path stroke="#fbbf04" fill="#fbbf04" stroke-width="1" stroke-linecap="round" d="M-94.8,24.4L-91.3,18.4C-92.4,18.9,-93.5,19.3,-94.8,19.3C-96.1,19.3,-97.3,18.9,-98.3,18.4L-94.8,24.4"></path></g><g transform="translate(1276.970000,905.268000)" id="shape115"><path stroke-dasharray="3.33333,3.33333" stroke="#fbbf04" fill="none" stroke-width="1.3333300352096558" d="M.0,.0L.0,11.0L94.8,11.0L94.8,19.3"></path><path stroke="#fbbf04" fill="#fbbf04" stroke-width="1" stroke-linecap="round" d="M94.8,24.4L98.3,18.4C97.3,18.9,96.1,19.3,94.8,19.3C93.5,19.3,92.4,18.9,91.3,18.4L94.8,24.4"></path></g></svg>
+
+</div>
